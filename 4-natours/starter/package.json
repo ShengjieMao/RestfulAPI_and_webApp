@@ -6,7 +6,8 @@
   "scripts": {
     "start": "nodemon server.js",
     "start:prod": "NODE_ENV=production nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": "ndb server.js"
   },
   "author": "Shengjie M",
   "license": "ISC",
@@ -21,5 +22,8 @@
   },
   "engines": {
     "node": ">=10.0.0"
+  },
+  "devDependencies": {
+    "ndb": "^1.1.5"
   }
 }
