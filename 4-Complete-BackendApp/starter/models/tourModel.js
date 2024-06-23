@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const validator = require('validator');
+// const validator = require('validator');
+// const User = require('./userModel');
 
 // create new schema for the crud functions
 const tourSchema = new mongoose.Schema(
@@ -36,6 +37,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
+      set: (val) => Math.round(val * 10) / 10,
     },
     ratingsQuantity: {
       type: Number,
@@ -80,6 +82,44 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      // GeoJSON - embedded object
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number], // longitude, latitude
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    // Referencing - tours & users should be in separate entities
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
+    // Deprecated method - Embedding reviews into the tour schema
+    // reviews: [
+    //   {
+    //     type: mongoose.Schema.ObjectId,
+    //     ref: 'Review',
+    //   },
+    // ],
   },
   {
     toJSON: { virtuals: true },
@@ -87,29 +127,61 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
+// Indexing
+tourSchema.index({ price: 1, ratingsAverage: -1 }); // 1: sort in ascending order
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
+
 // calculate duration in weeks
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7; // pointing to the current document, so need to use regular expression
 });
 
+// Virtual populate - connect the models together
+// populating reviews to tours without keeping ids in db
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+});
+
 // Mongoose middleware
-// 1) Document middleware: runs before .save() and .create()
+// 1. Document middleware: runs before .save() and .create()
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
 
-// 2) Query middleware: runs before or after a query
+// ------- Embedding guides into the tour schema -------
+// -- Not good for this app because future changes might be huge --
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+//   next();
+// });
+
+// 2. Query middleware: runs before or after a query
 tourSchema.pre(/^find/, function (next) {
   this.find({ secretTour: { $ne: true } }); // exclude secret tours from showing
   next();
 });
 
-// 3) Aggregation middleware: runs before or after an aggregation
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+// populate the guides field
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    // populate the guides field
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+
   next();
 });
+
+// 3. Aggregation middleware: runs before or after an aggregation
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+//   next();
+// });
 
 // the model for the schema
 const Tour = mongoose.model('Tour', tourSchema);
