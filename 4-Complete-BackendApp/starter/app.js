@@ -1,5 +1,6 @@
 // The File Only Deals with Express
 
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan'); // make log more readable
 const rateLimit = require('express-rate-limit'); // limit the number of requests
@@ -14,10 +15,19 @@ const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
+// Define the Pug engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views')); // set the views folder
+
 // 1. GLOBAL MIDDLEWARES
+// Serving static files
+// app.use(express.static(`${__dirname}/public`)); // serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Set security HTTP headers
 app.use(helmet()); // set security HTTP headers
 
@@ -57,9 +67,6 @@ app.use(
   })
 );
 
-// Serving static files
-app.use(express.static(`${__dirname}/public`)); // serve static files
-
 // Test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
@@ -67,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // 3. Mounting routes
-
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
