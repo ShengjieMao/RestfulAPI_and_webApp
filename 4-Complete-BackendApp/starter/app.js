@@ -22,6 +22,8 @@ const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
+app.enable('trust proxy'); // secure HTTPS connections
+
 // Define the Pug engine
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views')); // set the views folder
