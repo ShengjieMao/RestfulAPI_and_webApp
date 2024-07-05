@@ -10,6 +10,7 @@ const xss = require('xss-clean'); // prevent XSS
 const hpp = require('hpp'); // prevent parameter pollution
 const cookieParser = require('cookie-parser'); // parse cookies
 const compression = require('compression'); // compress the response
+const cors = require('cors'); // enable CORS
 
 // Middlewares
 const AppError = require('./utils/appError');
@@ -28,7 +29,17 @@ app.enable('trust proxy'); // secure HTTPS connections
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views')); // set the views folder
 
-// 1. GLOBAL MIDDLEWARES
+// 1. GLOBAL MIDDLEWARESs
+// Implement CORS - enable all CORS requests
+app.use(cors());
+// Access-Control-Allow-Origin: *
+// app.use(cors({
+//   origin: 'http://www.appName.com',
+//   credentials: true
+// }));
+
+app.options('*', cors()); // pre-flight phase
+
 // Serving static files
 // app.use(express.static(`${__dirname}/public`)); // serve static files
 app.use(express.static(path.join(__dirname, 'public')));
