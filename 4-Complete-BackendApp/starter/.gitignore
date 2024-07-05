@@ -11,7 +11,10 @@
 # Built Visual Studio Code Extensions
 *.vsix
 
-.env
+# (no credential stored in .env file - reveal for my own reference)
+# (Commented out in the future if I have to store credentials in .env file)
+# .env
+
 .DS_Store
 .env.local
 .env.development.local
