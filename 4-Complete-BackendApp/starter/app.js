@@ -9,6 +9,7 @@ const mongoSanitize = require('express-mongo-sanitize'); // prevent NoSQL query 
 const xss = require('xss-clean'); // prevent XSS
 const hpp = require('hpp'); // prevent parameter pollution
 const cookieParser = require('cookie-parser'); // parse cookies
+const compression = require('compression'); // compress the response
 
 // Middlewares
 const AppError = require('./utils/appError');
@@ -70,6 +71,8 @@ app.use(
     ],
   })
 );
+
+app.use(compression());
 
 // Test middleware
 app.use((req, res, next) => {
